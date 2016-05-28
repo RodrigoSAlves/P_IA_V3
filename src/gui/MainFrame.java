@@ -196,8 +196,6 @@ public class MainFrame extends JFrame implements GAListener {
 				return;
 			}*/
 
-			
-			bestIndividualPanel.textArea.setText("");
 			seriesBestIndividual.clear();
 			seriesAverage.clear();
 
@@ -293,20 +291,18 @@ public class MainFrame extends JFrame implements GAListener {
 	
 	private String buildStringBestSolution() {
 		StringBuilder sb = new StringBuilder();
-		double totalDistance=0;
-		double distance=0;
+		double[] distances = new double[problem.getEnvironment().getPredators().size()];
 		
 		sb.append("Resultado: ");
-		sb.append(problem.getEnvironment().preyIsCaught()? "Win" : "Loss");
+		sb.append(problem.getEnvironment().getPreyCaught()? "Win" : "Loss");
 		sb.append("\n");
-		for (int i = 0; i < problem.getEnvironment().getPredators().size(); i++){
-			distance=problem.getEnvironment().computeDistanceBetweenCells(problem.getEnvironment().getPredators().get(i).getCell(), 
-					problem.getEnvironment().getPrey().getCell());
-			sb.append("Predator "+(i+1)+": "+distance+"\n");
-			totalDistance+=distance;
+		distances=problem.getEnvironment().getPredatorsBestDistance();
+		for (int i = 0; i < distances.length; i++){
+			sb.append("Predator "+(i+1)+": "+distances[i]+"\n");
 		}
 		
-		sb.append("Best run: "+problem.getBestRun());
+		sb.append("\nFitness: "+problem.getBestRunValue());
+		sb.append("\nBest run: "+(problem.getBestRun()+1));
 		
 		return sb.toString();
 	}

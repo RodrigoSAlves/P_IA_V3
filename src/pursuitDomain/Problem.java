@@ -29,5 +29,9 @@ public abstract class Problem {
 		return bestRun;
 	}
 
+	public int getBestRunValue() {
+		return bestRunValue;
+	}
+
     
 }

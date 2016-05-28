@@ -25,6 +25,10 @@ public class Environment {
 	private int environmentSize;
 	private Cell[][] agentsActions;
 	private int numIterationsNeeded;
+	private int bestRunValue;
+	private Cell[][] agentsActionsAux;
+	private double[] predatorsBestDistance;
+	private boolean preyCaught;
 
 	// MORE ATTRIBUTES?
 
@@ -35,6 +39,11 @@ public class Environment {
 		this.maxIterations = maxIterations;
 		random = new Random();
 		agentsActions = new Cell[numPredators+1][maxIterations];
+		agentsActionsAux = new Cell[numPredators+1][maxIterations];
+		bestRunValue=maxIterations*2+environmentSize*numPredators;
+		numIterationsNeeded=maxIterations;
+		predatorsBestDistance = new double[numPredators];
+		preyCaught=false;
 
 		grid = new Cell[environmentSize][environmentSize];
 		for (int i = 0; i < grid.length; i++) {
@@ -102,11 +111,10 @@ public class Environment {
 
 		for (int i = 0; i < maxIterations; i++) {
 			prey.act(this);
-			agentsActions[0][i]=prey.getCell();
+			agentsActionsAux[0][i]=prey.getCell();
 			for (int j = 0; j < predators.size(); j++) {
 				predators.get(j).act(this);
-				agentsActions[j+1][i]=predators.get(j).getCell();
-				
+				agentsActionsAux[j+1][i]=predators.get(j).getCell();
 			}
 			
 			try {
@@ -115,16 +123,33 @@ public class Environment {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			numIterationsNeeded = i+1;
 
 			if (preyIsCaught()) {
 				System.out.println("Win");
-				numIterationsNeeded = i;
-				return;
+				preyCaught=true;
+				i=maxIterations;
 			}
 			spellPositions();
 		}
+		if(computeFitness() < bestRunValue)
+		{
+			bestRunValue=computeFitness();
+			agentsActions=agentsActionsAux;
+			for (int i = 0; i < predators.size(); i++) {
+				predatorsBestDistance[i]=computeDistanceBetweenCells(predators.get(i).getCell(), prey.getCell());
+			}
+			agentsActionsAux=new Cell[predators.size()+1][maxIterations];;
+		}
 	}
 	
+	public double[] getPredatorsBestDistance() {
+		return predatorsBestDistance;
+	}
+	
+	public boolean getPreyCaught() {
+		return preyCaught;
+	}
 	
 	public Cell getNextCell(Action action, Cell current)
 	{
@@ -220,9 +245,6 @@ public class Environment {
 		return grid[line][column];
 	}
 	
-	
-	
-
 	// THIS METHOD *MAY* BE USED BY THE PREY IF YOU WANT TO SELECT THE RANDOM
 	// PREY MOVEMENT JUST BETWEEN FREE SORROUNDING CELLS.
 	public ArrayList<Action> getFreeSorroundingActions(Cell cell) {
@@ -279,7 +301,7 @@ public class Environment {
 		listeners.remove(l);
 	}
 
-	public void fireUpdatedEnvironment() {
+	public void fireUpdatedEnvironment() {	
 		for (EnvironmentListener listener : listeners) {
 			listener.environmentUpdated();
 		}
@@ -318,22 +340,23 @@ public class Environment {
 			if(!cells[i].hasAgent())
 			{
 				aux.add(cells[i]);
-				
 			}		
 		}
 		return aux;
 	}
 
 	public void simulateBest() {
-		for (int i = 0; i < maxIterations; i++) {
+		for (int i = 0; i < numIterationsNeeded; i++) {
 			prey.setCell(agentsActions[0][i]);
 			
 			for (int j = 0; j < predators.size(); j++) {
 				predators.get(j).setCell(agentsActions[j+1][i]);
-			}		
-			if(preyIsCaught()){
+			}
+
+			if(preyIsCaught()){	
 				i=maxIterations;
 			}
+			
 			fireUpdatedEnvironment();
 		}
 	}
@@ -342,13 +365,13 @@ public class Environment {
 		int fitness=0;
 		
 		if(preyIsCaught()) {
-			fitness+=numIterationsNeeded*2;
+			fitness=numIterationsNeeded*2;
 		}
 		else {
-			fitness+=numIterationsNeeded*2;
+			fitness=numIterationsNeeded*2;
 			fitness+=computePredatorsPreyDistanceSum();
 		}
 		
 		return fitness;
-	}
+	}	
 }

@@ -18,7 +18,7 @@ public class AdHocProblem extends Problem{
 			environment.run();
 			if(environment.computeFitness() < bestRunValue) {
 				bestRunValue=environment.computeFitness();
-				bestRun = i+1;
+				bestRun = i;
 			}
 		}
 	}
